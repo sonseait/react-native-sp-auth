@@ -3,6 +3,8 @@
 ## Getting started
 
 `$ npm install react-native-sp-auth --save`
+or
+`$ yarn add react-native-sp-auth`
 
 ### Mostly automatic installation
 
@@ -21,7 +23,7 @@
 #### Android
 
 1. Open up `android/app/src/main/java/[...]/MainApplication.java`
-  - Add `import com.reactlibrary.RNSpAuthPackage;` to the imports at the top of the file
+  - Add `import com.fx.rnspauth.RNSpAuthPackage;` to the imports at the top of the file
   - Add `new RNSpAuthPackage()` to the list returned by the `getPackages()` method
 2. Append the following lines to `android/settings.gradle`:
   	```
