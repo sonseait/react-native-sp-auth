@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react-native",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "allowJs": false,
+    "lib": ["esnext", "dom"],
+    "plugins": [
+      {
+        "name": "@divyenduz/ts-graphql-plugin"
+      },
+      {
+        "name": "typescript-tslint-plugin"
+      }
+    ],
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules", "dist"]
+}

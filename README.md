@@ -36,9 +36,12 @@
 
 ## Usage
 ```javascript
-import RNSpAuth from 'react-native-sp-auth';
+import RNSharePointAuth from 'react-native-sp-auth';
 
-// TODO: What to do with the module?
-RNSpAuth;
+const sp = new RNSharePointAuth('https://yoursite.sharepoint.com');
+const digest = await sp.login('yourusername@yourdomain', 'yourpassword');
+
+// renew digest
+const newDigest = await sp.renewDigest();
 ```
   

@@ -1,0 +1,33 @@
+{
+  "name": "react-native-sp-auth",
+  "title": "React Native SharePoint Online Authentication",
+  "version": "1.0.2",
+  "description": "",
+  "main": "index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/sonseait/react-native-sp-auth.git",
+    "baseUrl": "https://gitlab.com/sonseait/react-native-sp-auth"
+  },
+  "keywords": [
+    "react-native"
+  ],
+  "author": {
+    "name": "Son Le Cong",
+    "email": "sonseait@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "licenseFilename": "LICENSE",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "invariant": "^2.2.4",
+    "lodash": "^4.17.11",
+    "react-native-xml2js": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/invariant": "^2.2.29",
+    "@types/lodash": "^4.14.123",
+    "@types/node": "^11.13.4"
+  }
+}
