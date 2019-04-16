@@ -66,7 +66,7 @@ export class SharePointAuth {
 
   async init(): Promise<SharePointAuth> {
     const cookies = await this.cookieReader.get(`https://${this.domain}.sharepoint.com`);
-    if (!cookies.FedAuth || !cookies.rtFa) return Promise.reject();
+    if (!cookies.FedAuth || !cookies.rtFa) return this;
     this.currentCookie = {
       FedAuth: cookies.FedAuth,
       rtFa: cookies.rtFa,
