@@ -7,10 +7,7 @@ const { RNSpAuthIOS, RNSpAuthAndroid } = NativeModules;
 let RNSpAuth: any;
 
 if (Platform.OS === 'ios') {
-  invariant(
-    RNSpAuthIOS,
-    'react-native-sp-auth: Add RNSpAuth.h and RNSpAuth.m to your Xcode project'
-  );
+  invariant(RNSpAuthIOS, 'react-native-sp-auth: Add RNSpAuth.h and RNSpAuth.m to your Xcode project');
   RNSpAuth = RNSpAuthIOS;
 } else if (Platform.OS === 'android') {
   invariant(
@@ -27,6 +24,14 @@ class RNSharePointAuth {
 
   constructor(host: string) {
     this.spAuth = new SharePointAuth(RNSpAuth, host);
+  }
+
+  /**
+   * Initialization
+   */
+  async init(): Promise<RNSharePointAuth> {
+    await this.spAuth.init();
+    return this;
   }
 
   /**

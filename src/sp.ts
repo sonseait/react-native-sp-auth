@@ -64,6 +64,16 @@ export class SharePointAuth {
       .replace('.sharepoint.com', '');
   }
 
+  async init(): Promise<SharePointAuth> {
+    const cookies = await this.cookieReader.get(`https://${this.domain}.sharepoint.com`);
+    if (!cookies.FedAuth || !cookies.rtFa) return Promise.reject();
+    this.currentCookie = {
+      FedAuth: cookies.FedAuth,
+      rtFa: cookies.rtFa,
+    };
+    return this;
+  }
+
   private async getToken(username: string, password: string): Promise<string> {
     const loginResponse = await axios.post<string>(
       'https://login.microsoftonline.com/extSTS.srf',
