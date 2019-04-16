@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from 'react-native';
 import invariant from 'invariant';
-import { SharePointAuth } from './src/sp';
+import { SharePointAuth, LoginResponse } from './src/sp';
 
 const { RNSpAuthIOS, RNSpAuthAndroid } = NativeModules;
 
@@ -32,7 +32,7 @@ class RNSharePointAuth {
   /**
    * Login to SharePoint Online by provide `username` & `password` and take `digest` back
    */
-  login(username: string, password: string): Promise<string> {
+  login(username: string, password: string): Promise<LoginResponse> {
     return this.spAuth.login(username, password);
   }
 

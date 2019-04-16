@@ -1,8 +1,8 @@
 {
   "name": "react-native-sp-auth",
   "title": "React Native SharePoint Online Authentication",
-  "version": "1.0.4",
-  "description": "",
+  "version": "1.0.6",
+  "description": "React Native SharePoint Online Authentication",
   "main": "index.ts",
   "repository": {
     "type": "git",
@@ -22,12 +22,11 @@
   "dependencies": {
     "axios": "^0.18.0",
     "invariant": "^2.2.4",
-    "lodash": "^4.17.11",
     "react-native-xml2js": "^1.0.3"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/invariant": "^2.2.29",
-    "@types/lodash": "^4.14.123",
     "@types/node": "^11.13.4"
   }
 }

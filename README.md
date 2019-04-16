@@ -2,8 +2,6 @@
 
 ## Getting started
 
-`$ npm install react-native-sp-auth --save`
-or
 `$ yarn add react-native-sp-auth`
 
 ### Mostly automatic installation
@@ -37,11 +35,11 @@ or
 
 
 ## Usage
-```javascript
+```typescript
 import RNSharePointAuth from 'react-native-sp-auth';
 
 const sp = new RNSharePointAuth('https://yoursite.sharepoint.com');
-const digest = await sp.login('yourusername@yourdomain', 'yourpassword');
+const { digest, cookie } = await sp.login('yourusername@yourdomain', 'yourpassword');
 
 // renew digest
 const newDigest = await sp.renewDigest();

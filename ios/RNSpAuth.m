@@ -41,15 +41,28 @@ RCT_EXPORT_METHOD(get:(NSURL *) url
     resolver(cookies)
 }
 
-RCT_EXPORT_METHOD(clearAll
+RCT_EXPORT_METHOD(removeByHost:(NSString *) host
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
     for (NSHTTPCookie *c in cookieStorage.cookies) {
+      if ([[c host] isEqualToString:host]) {
         [cookieStorage deleteCookie:c];
+      }
     }
     resolver(nil);
+}
+
+RCT_EXPORT_METHOD(
+    clearCookies:(RCTPromiseResolveBlock)resolve
+    rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    for (NSHTTPCookie *c in cookieStorage.cookies) {
+        [cookieStorage deleteCookie:c];
+    }
+    resolve(nil);
 }
 
 @end

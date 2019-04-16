@@ -43,9 +43,14 @@ const samlTpl = `
   </s:Envelope>
 `;
 
-interface SpCookie {
+export interface SpCookie {
   FedAuth: string;
   rtFa: string;
+}
+
+export interface LoginResponse {
+  cookie: string;
+  digest: string;
 }
 
 export class SharePointAuth {
@@ -82,11 +87,11 @@ export class SharePointAuth {
     await axios.post(`https://${this.domain}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
       withCredentials: true,
     });
-    const cookies = this.cookieReader.get(`https://${this.domain}.sharepoint.com`);
-    if (cookies.FedAuth && cookies.FedAuth) return Promise.reject();
+    const cookies = await this.cookieReader.get(`https://${this.domain}.sharepoint.com`);
+    if (!cookies.FedAuth || !cookies.rtFa) return Promise.reject();
     return {
       FedAuth: cookies.FedAuth,
-      rtFa: cookies.FedAuth,
+      rtFa: cookies.rtFa,
     };
   }
 
@@ -114,15 +119,21 @@ export class SharePointAuth {
   /**
    * Login to SharePoint Online by provide `username` & `password` and take `digest` back
    */
-  async login(username: string, password: string): Promise<string> {
+  async login(username: string, password: string): Promise<LoginResponse> {
+    await this.logout();
     const token = await this.getToken(username, password);
     this.currentCookie = await this.getCookie(token);
-    return this.getDigest(this.currentCookie);
+    const digest = await this.getDigest(this.currentCookie);
+    return {
+      digest,
+      cookie: `FedAuth=${this.currentCookie.FedAuth};rtFa=${this.currentCookie.rtFa}`,
+    };
   }
 
-  async logout(): Promise<void> {
+  logout(): Promise<void> {
     this.currentCookie = undefined;
-    // await this.cookieReader.clearAll();
+    // return this.cookieReader.clearCookies();
+    return this.cookieReader.removeByHost(`https://${this.domain}.sharepoint.com`);
   }
 
   /**

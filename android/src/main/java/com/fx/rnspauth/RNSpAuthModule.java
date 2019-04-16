@@ -16,6 +16,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class RNSpAuthModule extends ReactContextBaseJavaModule {
@@ -52,7 +53,24 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void clearAll(final Promise promise) {
+    public void removeByHost(String host, final Promise promise) {
+        Map headers1 = new HashMap<String, List<String>>();
+        // headers1.put("Set-Cookie", Collections.singletonList(java.text.MessageFormat.format("FedAuth=; Path=/; Expires={0}", CookieExpiration.milliseconds(100).toExpiresString())));
+        headers1.put("Set-Cookie", Collections.singletonList("FedAuth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
+        Map headers2 = new HashMap<String, List<String>>();
+        headers2.put("Set-Cookie", Collections.singletonList("rtFa=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
+        // headers2.put("Set-Cookie", Collections.singletonList(java.text.MessageFormat.format("rtFa=; Path=/; Expires={0}", CookieExpiration.milliseconds(100).toExpiresString())));
+        try {
+            this.cookieHandler.put(new URI(host), headers1);
+            this.cookieHandler.put(new URI(host), headers2);
+            promise.resolve(true);
+        } catch (Exception e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    public void clearCookies(final Promise promise) {
         this.cookieHandler.clearCookies(new Callback() {
             public void invoke(Object... args) {
                 promise.resolve(null);
