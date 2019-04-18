@@ -55,9 +55,9 @@ export interface LoginResponse {
 
 export class SharePointAuth {
   private domain: string;
-  private currentCookie: SpCookie | undefined = undefined;
   private cookieReader: any;
   private host: string;
+  public currentCookie: SpCookie | undefined = undefined;
 
   constructor(cookieReader: any, host: string) {
     this.domain = host

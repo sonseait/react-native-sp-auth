@@ -41,13 +41,24 @@ import RNSharePointAuth from 'react-native-sp-auth';
 
 const sp = await new RNSharePointAuth('https://yoursite.sharepoint.com').init();
 try {
-	// trying to restore session
+  // trying to restore session
   const digest = await sp.renewDigest();
 } catch (e) {
-	// can't restore the session, re-login
-  const { digest, cookie } = await sp.login('yourusername@yourdomain', 'yourpassword');
+  // can't automatic restore the session, read cookie from Storage
+  const cookie = Storage.getItem('cookie');
+  if (cookie) {
+    sp.currentCookie = cookie;
+    try {
+      const digest = await sp.renewDigest();
+    } catch (e1) {
+      // can't restore the session, re-login
+      const { digest, cookie } = await sp.login('yourusername@yourdomain', 'yourpassword');
+      // store cookie back to Storage
+      Storage.setItem('cookie', cookie);
+    }
+  }
 }
 
-// renew digest
+// renew digest if expired
 const newDigest = await sp.renewDigest();
 ```

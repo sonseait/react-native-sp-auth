@@ -45,8 +45,40 @@ class RNSharePointAuth {
     this.spAuth.logout();
   }
 
-  getCurrentCookie(): string | undefined {
-    return this.spAuth.getCurrentCookie();
+  get currentCookie(): string | undefined {
+    if (!this.spAuth.currentCookie) return undefined;
+    return `FedAuth=${this.spAuth.currentCookie.FedAuth};rtFa=$${this.spAuth.currentCookie.rtFa}`;
+  }
+
+  set currentCookie(cookie: string | undefined) {
+    if (!cookie) {
+      this.spAuth.currentCookie = undefined;
+      return;
+    }
+    if (cookie.includes('FedAuth=') && cookie.includes('rtFa=')) {
+      const parts = cookie.split(';');
+      const newCookie = parts.reduce((acc: Partial<SpCookie>, part: string) => {
+        part = part.trim();
+        if (part.startsWith('FedAuth=')) {
+          const fed = part.replace('FedAuth=', '');
+          if (fed) {
+            acc.FedAuth = fed;
+          }
+        }
+        if (part.startsWith('rtFa=')) {
+          const rtfa = part.replace('rtFa=', '');
+          if (rtfa) {
+            acc.rtFa = rtfa;
+          }
+        }
+        return acc;
+      }, {});
+      if (newCookie.FedAuth && newCookie.rtFa) {
+        this.spAuth.currentCookie = newCookie as SpCookie;
+      } else {
+        this.spAuth.currentCookie = undefined;
+      }
+    }
   }
 
   /**
