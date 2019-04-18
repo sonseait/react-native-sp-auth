@@ -38,7 +38,7 @@ RCT_EXPORT_METHOD(get:(NSURL *) url
         [d setObject:[self.formatter stringFromDate:c.expiresDate] forKey:@"expiresDate"];
         [cookies setObject:d forKey:c.name];
     }
-    resolver(cookies)
+    resolve(cookies);
 }
 
 RCT_EXPORT_METHOD(removeByHost:(NSString *) host
@@ -47,11 +47,11 @@ RCT_EXPORT_METHOD(removeByHost:(NSString *) host
 {
     NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
     for (NSHTTPCookie *c in cookieStorage.cookies) {
-      if ([[c host] isEqualToString:host]) {
+      if ([[c name] isEqualToString:host]) {
         [cookieStorage deleteCookie:c];
       }
     }
-    resolver(nil);
+    resolve(nil);
 }
 
 RCT_EXPORT_METHOD(

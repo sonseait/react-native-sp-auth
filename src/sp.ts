@@ -56,12 +56,16 @@ export interface LoginResponse {
 export class SharePointAuth {
   private domain: string;
   private currentCookie: SpCookie | undefined = undefined;
+  private cookieReader: any;
+  private host: string;
 
-  constructor(private cookieReader: any, private host: string) {
+  constructor(cookieReader: any, host: string) {
     this.domain = host
       .trim()
       .split('/')[2]
       .replace('.sharepoint.com', '');
+    this.cookieReader = cookieReader;
+    this.host = host;
   }
 
   async init(): Promise<SharePointAuth> {
@@ -105,6 +109,10 @@ export class SharePointAuth {
     };
   }
 
+  getCurrentCookie(): string | undefined {
+    return this.currentCookie && `FedAuth=${this.currentCookie.FedAuth};rtFa=$${this.currentCookie.rtFa}`;
+  }
+
   private async getDigest(cookie: SpCookie): Promise<string> {
     const res = await axios.post(
       `https://${this.domain}.sharepoint.com/_api/contextinfo`,
@@ -142,8 +150,8 @@ export class SharePointAuth {
 
   logout(): Promise<void> {
     this.currentCookie = undefined;
-    // return this.cookieReader.clearCookies();
-    return this.cookieReader.removeByHost(`https://${this.domain}.sharepoint.com`);
+    return this.cookieReader.clearCookies();
+    // return this.cookieReader.removeByHost(`https://${this.domain}.sharepoint.com`);
   }
 
   /**

@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from 'react-native';
 import invariant from 'invariant';
-import { SharePointAuth, LoginResponse } from './src/sp';
+import { SharePointAuth, LoginResponse, SpCookie } from './src/sp';
 
 const { RNSpAuthIOS, RNSpAuthAndroid } = NativeModules;
 
@@ -45,8 +45,12 @@ class RNSharePointAuth {
     this.spAuth.logout();
   }
 
+  getCurrentCookie(): string | undefined {
+    return this.spAuth.getCurrentCookie();
+  }
+
   /**
-   * renew the `digest`
+   * Renew the `digest`
    */
   renewDigest(): Promise<string> {
     return this.spAuth.renewDigest();
