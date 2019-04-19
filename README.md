@@ -63,5 +63,5 @@ try {
 const newDigest = await sp.renewDigest();
 
 // obtain digest for site collection
-const digest4SiteCollection = await sp.getDigestForSiteCollection('/sites/o40');
+const digest4SiteCollection = await sp.renewDigest('/sites/o40');
 ```
