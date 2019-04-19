@@ -79,6 +79,14 @@ class RNSharePointAuth {
   renewDigest(): Promise<string> {
     return this.spAuth.getDigest();
   }
+
+  /**
+   * full url: https://yoursite.sharepoint.com/sites/o40
+   * => siteCollectionRelativePath === /sites/o40
+   */
+  getDigestForSiteCollection(siteCollectionRelativePath?: string) {
+    return this.spAuth.getDigest(siteCollectionRelativePath);
+  }
 }
 
 export default RNSharePointAuth;

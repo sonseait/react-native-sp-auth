@@ -150,9 +150,9 @@ export class SharePointAuth {
     await this.getCurrentCookie();
   }
 
-  async getDigest(): Promise<string> {
+  async getDigest(siteCollectionRelativePath?: string): Promise<string> {
     const res = await axios.post(
-      `https://${this.domain}.sharepoint.com/_api/contextinfo`,
+      `https://${this.domain}.sharepoint.com${siteCollectionRelativePath || ''}/_api/contextinfo`,
       {},
       {
         headers: {
