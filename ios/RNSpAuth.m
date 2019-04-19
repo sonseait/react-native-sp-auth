@@ -35,7 +35,6 @@ RCT_EXPORT_METHOD(get:(NSURL *) url
         [d setObject:c.name forKey:@"name"];
         [d setObject:c.domain forKey:@"domain"];
         [d setObject:c.path forKey:@"path"];
-        [d setObject:[self.formatter stringFromDate:c.expiresDate] forKey:@"expiresDate"];
         [cookies setObject:d forKey:c.name];
     }
     resolve(cookies);
