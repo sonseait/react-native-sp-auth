@@ -1,6 +1,6 @@
 import { NativeModules, Platform } from 'react-native';
 import invariant from 'invariant';
-import { SharePointAuth, LoginResponse, SpCookie } from './src/sp';
+import { SharePointAuth, LoginResponse, SPCookie, SPCookieReader } from './src/sp';
 
 const { RNSpAuthIOS, RNSpAuthAndroid } = NativeModules;
 
@@ -23,15 +23,7 @@ class RNSharePointAuth {
   private spAuth: SharePointAuth;
 
   constructor(host: string) {
-    this.spAuth = new SharePointAuth(RNSpAuth, host);
-  }
-
-  /**
-   * Initialization
-   */
-  async init(): Promise<RNSharePointAuth> {
-    await this.spAuth.init();
-    return this;
+    this.spAuth = new SharePointAuth(new SPCookieReader(RNSpAuth), host);
   }
 
   /**
@@ -41,43 +33,43 @@ class RNSharePointAuth {
     return this.spAuth.login(username, password);
   }
 
-  logout() {
-    this.spAuth.logout();
+  logout(): Promise<void> {
+    return this.spAuth.logout();
   }
 
-  get currentCookie(): string | undefined {
-    if (!this.spAuth.currentCookie) return undefined;
-    return `FedAuth=${this.spAuth.currentCookie.FedAuth};rtFa=$${this.spAuth.currentCookie.rtFa}`;
+  async getCurrentCookie(): Promise<string> {
+    const cookie = await this.spAuth.getCurrentCookie();
+    return btoa(`FedAuth=${cookie.FedAuth};rtFa=${cookie.rtFa}`);
   }
 
-  set currentCookie(cookie: string | undefined) {
+  async setCurrentCookie(cookie: string): Promise<void> {
     if (!cookie) {
-      this.spAuth.currentCookie = undefined;
-      return;
+      return this.spAuth.logout();
     }
-    if (cookie.includes('FedAuth=') && cookie.includes('rtFa=')) {
-      const parts = cookie.split(';');
-      const newCookie = parts.reduce((acc: Partial<SpCookie>, part: string) => {
-        part = part.trim();
-        if (part.startsWith('FedAuth=')) {
-          const fed = part.replace('FedAuth=', '');
-          if (fed) {
-            acc.FedAuth = fed;
+    try {
+      const realCookie = atob(cookie);
+      if (realCookie.includes('FedAuth=') && realCookie.includes('rtFa=')) {
+        const parts = realCookie.split(';');
+        const newCookie = parts.reduce((acc: Partial<SPCookie>, part: string) => {
+          part = part.trim();
+          if (part.startsWith('FedAuth=')) {
+            const fed = part.replace('FedAuth=', '');
+            if (fed) {
+              acc.FedAuth = fed;
+            }
           }
-        }
-        if (part.startsWith('rtFa=')) {
-          const rtfa = part.replace('rtFa=', '');
-          if (rtfa) {
-            acc.rtFa = rtfa;
+          if (part.startsWith('rtFa=')) {
+            const rtfa = part.replace('rtFa=', '');
+            if (rtfa) {
+              acc.rtFa = rtfa;
+            }
           }
-        }
-        return acc;
-      }, {});
-      if (newCookie.FedAuth && newCookie.rtFa) {
-        this.spAuth.currentCookie = newCookie as SpCookie;
-      } else {
-        this.spAuth.currentCookie = undefined;
+          return acc;
+        }, {});
+        return this.spAuth.setCurrentCookie(newCookie);
       }
+    } catch (e) {
+      return this.spAuth.logout();
     }
   }
 
@@ -85,7 +77,7 @@ class RNSharePointAuth {
    * Renew the `digest`
    */
   renewDigest(): Promise<string> {
-    return this.spAuth.renewDigest();
+    return this.spAuth.getDigest();
   }
 }
 

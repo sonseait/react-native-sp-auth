@@ -45,16 +45,16 @@ try {
   const digest = await sp.renewDigest();
 } catch (e) {
   // can't automatic restore the session, read cookie from Storage
-  const cookie = Storage.getItem('cookie');
+  const cookie = await Storage.getItem('cookie');
   if (cookie) {
-    sp.currentCookie = cookie;
+    await sp.setCurrentCookie(cookie);
     try {
       const digest = await sp.renewDigest();
     } catch (e1) {
       // can't restore the session, re-login
       const { digest, cookie } = await sp.login('yourusername@yourdomain', 'yourpassword');
       // store cookie back to Storage
-      Storage.setItem('cookie', cookie);
+      await Storage.setItem('cookie', cookie);
     }
   }
 }

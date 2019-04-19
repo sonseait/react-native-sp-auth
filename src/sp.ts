@@ -1,11 +1,12 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 const parseString = require('react-native-xml2js').parseString;
 
 const parseXml = (xml: string) => {
   return new Promise((resolve, reject) => {
     parseString(xml, function(err: any, result: any) {
       if (err) {
-        reject();
+        reject(`Can't parse xml string from login response`);
       } else {
         resolve(result);
       }
@@ -43,7 +44,7 @@ const samlTpl = `
   </s:Envelope>
 `;
 
-export interface SpCookie {
+export interface SPCookie {
   FedAuth: string;
   rtFa: string;
 }
@@ -53,13 +54,49 @@ export interface LoginResponse {
   digest: string;
 }
 
+export class SPCookieReader {
+  private reader: any;
+  constructor(reader: any) {
+    this.reader = reader;
+  }
+
+  getCookie(siteName: string): Promise<SPCookie> {
+    return this.reader.get(`https://${siteName}.sharepoint.com`);
+  }
+
+  removeCookie(siteName: string): Promise<void> {
+    return this.reader.remove(`https://${siteName}.sharepoint.com`);
+  }
+
+  async setCookie(siteName: string, rtFaToken: string, fedAuthToken: string): Promise<void> {
+    if (Platform.OS === 'ios') {
+      await this.reader.set(`https://${siteName}.sharepoint.com`, 'rtFa', rtFaToken, {
+        domain: 'sharepoint.com',
+        path: '/',
+      });
+      await this.reader.set(`https://${siteName}.sharepoint.com`, 'FedAuth', fedAuthToken, {
+        domain: `${siteName}.sharepoint.com`,
+        path: '/',
+      });
+    } else {
+      await this.reader.set(
+        `https://${siteName}.sharepoint.com`,
+        `rtFa=${rtFaToken}; Domain=sharepoint.com; Path=/; Secure; HttpOnly`
+      );
+      await this.reader.set(
+        `https://${siteName}.sharepoint.com`,
+        `FedAuth=${fedAuthToken}; Path=/; Secure; HttpOnly; Domain=${siteName}.sharepoint.com`
+      );
+    }
+  }
+}
+
 export class SharePointAuth {
   private domain: string;
-  private cookieReader: any;
+  private cookieReader: SPCookieReader;
   private host: string;
-  public currentCookie: SpCookie | undefined = undefined;
 
-  constructor(cookieReader: any, host: string) {
+  constructor(cookieReader: SPCookieReader, host: string) {
     this.domain = host
       .trim()
       .split('/')[2]
@@ -68,14 +105,19 @@ export class SharePointAuth {
     this.host = host;
   }
 
-  async init(): Promise<SharePointAuth> {
-    const cookies = await this.cookieReader.get(`https://${this.domain}.sharepoint.com`);
-    if (!cookies.FedAuth || !cookies.rtFa) return this;
-    this.currentCookie = {
-      FedAuth: cookies.FedAuth,
-      rtFa: cookies.rtFa,
-    };
-    return this;
+  async getCurrentCookie(): Promise<SPCookie> {
+    const cookies = await this.cookieReader.getCookie(this.domain);
+    if (cookies.FedAuth && cookies.rtFa) {
+      return cookies;
+    }
+    return Promise.reject(`SharePoint Cookie isn't valid`);
+  }
+
+  setCurrentCookie(cookie: Partial<SPCookie>): Promise<void> {
+    if (cookie.FedAuth && cookie.rtFa) {
+      return this.cookieReader.setCookie(this.domain, cookie.rtFa, cookie.FedAuth);
+    }
+    return Promise.reject(`Your cookie you just set isn't match with SharePoint format`);
   }
 
   private async getToken(username: string, password: string): Promise<string> {
@@ -93,44 +135,37 @@ export class SharePointAuth {
       responseBody['wst:RequestSecurityTokenResponse'][0]['wst:RequestedSecurityToken'][0][
         'wsse:BinarySecurityToken'
       ][0]['_'];
-    if (!token) return Promise.reject();
+    if (!token)
+      return Promise.reject(
+        `Can't obtain token, maybe wrong credentials or you not have permission to access this site`
+      );
     return token;
   }
 
-  private async getCookie(token: string): Promise<SpCookie> {
+  private async getCookie(token: string): Promise<void> {
     await axios.post(`https://${this.domain}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
       withCredentials: true,
     });
-    const cookies = await this.cookieReader.get(`https://${this.domain}.sharepoint.com`);
-    if (!cookies.FedAuth || !cookies.rtFa) return Promise.reject();
-    return {
-      FedAuth: cookies.FedAuth,
-      rtFa: cookies.rtFa,
-    };
+    // check if cookie was assigned successful?
+    await this.getCurrentCookie();
   }
 
-  getCurrentCookie(): string | undefined {
-    return this.currentCookie && `FedAuth=${this.currentCookie.FedAuth};rtFa=$${this.currentCookie.rtFa}`;
-  }
-
-  private async getDigest(cookie: SpCookie): Promise<string> {
+  async getDigest(): Promise<string> {
     const res = await axios.post(
       `https://${this.domain}.sharepoint.com/_api/contextinfo`,
       {},
       {
         headers: {
           Accept: 'application/json; odata=verbose',
-          Cookie: `FedAuth=${cookie.FedAuth};rtFa=$${cookie.rtFa}`,
-          'Content-Type': 'application/json; odata=verbose',
         },
       }
     );
     try {
       const digest = res.data.d.GetContextWebInformation.FormDigestValue;
-      if (!digest) return Promise.reject();
+      if (!digest) return Promise.reject(`Can't obtain digest`);
       return digest;
     } catch (e) {
-      return Promise.reject();
+      return Promise.reject(`Something error when trying to obtain digest, maybe token was expired`);
     }
   }
 
@@ -140,27 +175,17 @@ export class SharePointAuth {
   async login(username: string, password: string): Promise<LoginResponse> {
     await this.logout();
     const token = await this.getToken(username, password);
-    this.currentCookie = await this.getCookie(token);
-    const digest = await this.getDigest(this.currentCookie);
+    await this.getCookie(token);
+    const cookie = await this.getCurrentCookie();
+    const digest = await this.getDigest();
     return {
       digest,
-      cookie: `FedAuth=${this.currentCookie.FedAuth};rtFa=${this.currentCookie.rtFa}`,
+      cookie: btoa(`FedAuth=${cookie.FedAuth};rtFa=${cookie.rtFa}`),
     };
   }
 
   logout(): Promise<void> {
-    this.currentCookie = undefined;
-    return this.cookieReader.clearCookies();
-    // return this.cookieReader.removeByHost(`https://${this.domain}.sharepoint.com`);
-  }
-
-  /**
-   * renew the digest
-   */
-  renewDigest(): Promise<string> {
-    if (this.currentCookie) {
-      return this.getDigest(this.currentCookie);
-    }
-    return Promise.reject();
+    return this.cookieReader.removeCookie(this.domain);
+    // return this.cookieReader.clearCookies();
   }
 }

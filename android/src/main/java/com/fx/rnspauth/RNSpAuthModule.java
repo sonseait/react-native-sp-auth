@@ -34,6 +34,15 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void set(String url, String value, final Promise promise) throws URISyntaxException, IOException{
+        URI uri = new URI(url);
+        Map<String, List<String>> cookieMap = new HashMap<>();
+        cookieMap.put("Set-Cookie", Collections.singletonList(value));
+        this.cookieHandler.put(uri, cookieMap);
+        promise.resolve(null);
+    }
+
+    @ReactMethod
     public void get(String url, final Promise promise) throws URISyntaxException, IOException {
         URI uri = new URI(url);
         Map<String, List<String>> cookieMap = this.cookieHandler.get(uri, new HashMap());
@@ -53,24 +62,24 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void removeByHost(String host, final Promise promise) {
+    public void remove(String url, final Promise promise) {
         Map headers1 = new HashMap<String, List<String>>();
         // headers1.put("Set-Cookie", Collections.singletonList(java.text.MessageFormat.format("FedAuth=; Path=/; Expires={0}", CookieExpiration.milliseconds(100).toExpiresString())));
         headers1.put("Set-Cookie", Collections.singletonList("FedAuth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
         Map headers2 = new HashMap<String, List<String>>();
-        headers2.put("Set-Cookie", Collections.singletonList("rtFa=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
         // headers2.put("Set-Cookie", Collections.singletonList(java.text.MessageFormat.format("rtFa=; Path=/; Expires={0}", CookieExpiration.milliseconds(100).toExpiresString())));
+        headers2.put("Set-Cookie", Collections.singletonList("rtFa=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
         try {
-            this.cookieHandler.put(new URI(host), headers1);
-            this.cookieHandler.put(new URI(host), headers2);
-            promise.resolve(true);
+            this.cookieHandler.put(new URI(url), headers1);
+            this.cookieHandler.put(new URI(url), headers2);
+            promise.resolve(null);
         } catch (Exception e) {
             promise.reject(e);
         }
     }
 
     @ReactMethod
-    public void clearCookies(final Promise promise) {
+    public void clear(final Promise promise) {
         this.cookieHandler.clearCookies(new Callback() {
             public void invoke(Object... args) {
                 promise.resolve(null);

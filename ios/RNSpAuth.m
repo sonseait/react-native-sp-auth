@@ -41,13 +41,43 @@ RCT_EXPORT_METHOD(get:(NSURL *) url
     resolve(cookies);
 }
 
-RCT_EXPORT_METHOD(removeByHost:(NSString *) host
+RCT_EXPORT_METHOD(set:(NSURL *) url
+                  name:(NSString *)name
+                  value:(NSString *)value
+                  props:(NSDictionary *)props
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    NSMutableDictionary *cookieProperties = [NSMutableDictionary dictionary];
+
+    [cookieProperties setObject:url.host forKey:NSHTTPCookieOriginURL];
+    [cookieProperties setObject:name forKey:NSHTTPCookieName];
+    [cookieProperties setObject:value forKey:NSHTTPCookieValue];
+
+    NSString *domain = [RCTConvert NSString:props[@"domain"]];
+    [cookieProperties setObject:domain ? domain : url.host forKey:NSHTTPCookieDomain];
+
+    NSString *path = [RCTConvert NSString:props[@"path"]];
+    [cookieProperties setObject:path ? path : @"/" forKey:NSHTTPCookiePath];
+
+    NSNumber *expires = [RCTConvert NSNumber:props[@"expires"]];
+    if (expires) {
+        [cookieProperties setObject:[NSDate dateWithTimeIntervalSince1970:[expires doubleValue]] forKey:NSHTTPCookieExpires];
+    };
+
+    NSHTTPCookie *cookie = [NSHTTPCookie cookieWithProperties:cookieProperties];
+    [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+
+    resolve(nil);
+}
+
+RCT_EXPORT_METHOD(remove:(NSString *) url
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
     for (NSHTTPCookie *c in cookieStorage.cookies) {
-      if ([[c name] isEqualToString:host]) {
+      if ([[c name] isEqualToString:url]) {
         [cookieStorage deleteCookie:c];
       }
     }
@@ -55,7 +85,7 @@ RCT_EXPORT_METHOD(removeByHost:(NSString *) host
 }
 
 RCT_EXPORT_METHOD(
-    clearCookies:(RCTPromiseResolveBlock)resolve
+    clear:(RCTPromiseResolveBlock)resolve
     rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
