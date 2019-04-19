@@ -39,7 +39,7 @@
 ```typescript
 import RNSharePointAuth from 'react-native-sp-auth';
 
-const sp = await new RNSharePointAuth('https://yoursite.sharepoint.com').init();
+const sp = await new RNSharePointAuth('https://yoursite.sharepoint.com');
 try {
   // trying to restore session
   const digest = await sp.renewDigest();
