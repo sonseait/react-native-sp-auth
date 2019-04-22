@@ -76,7 +76,7 @@ RCT_EXPORT_METHOD(remove:(NSString *) url
 {
     NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
     for (NSHTTPCookie *c in cookieStorage.cookies) {
-      if ([[c name] isEqualToString:url]) {
+      if ([[c domain] isEqualToString:url]) {
         [cookieStorage deleteCookie:c];
       }
     }

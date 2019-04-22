@@ -35,10 +35,7 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void set(String url, String value, final Promise promise) throws URISyntaxException, IOException{
-        URI uri = new URI(url);
-        Map<String, List<String>> cookieMap = new HashMap<>();
-        cookieMap.put("Set-Cookie", Collections.singletonList(value));
-        this.cookieHandler.put(uri, cookieMap);
+        setCookie(url, value);
         promise.resolve(null);
     }
 
@@ -62,20 +59,22 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void remove(String url, final Promise promise) {
-        Map headers1 = new HashMap<String, List<String>>();
-        // headers1.put("Set-Cookie", Collections.singletonList(java.text.MessageFormat.format("FedAuth=; Path=/; Expires={0}", CookieExpiration.milliseconds(100).toExpiresString())));
-        headers1.put("Set-Cookie", Collections.singletonList("FedAuth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
-        Map headers2 = new HashMap<String, List<String>>();
-        // headers2.put("Set-Cookie", Collections.singletonList(java.text.MessageFormat.format("rtFa=; Path=/; Expires={0}", CookieExpiration.milliseconds(100).toExpiresString())));
-        headers2.put("Set-Cookie", Collections.singletonList("rtFa=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"));
+    public void remove(String siteName, final Promise promise) {
         try {
-            this.cookieHandler.put(new URI(url), headers1);
-            this.cookieHandler.put(new URI(url), headers2);
+            String uri = java.text.MessageFormat.format("https://{0}.sharepoint.com", siteName);
+            setCookie(uri, java.text.MessageFormat.format("FedAuth=; Expires=Thu, 01 Jan 1970 00:00:00 GMT", siteName));
+            setCookie(uri, "rtFa=; Domain=sharepoint.com; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
             promise.resolve(null);
         } catch (Exception e) {
             promise.reject(e);
         }
+    }
+
+    private void setCookie(String url, String value) throws URISyntaxException, IOException {
+        URI uri = new URI(url);
+        Map<String, List<String>> cookieMap = new HashMap<>();
+        cookieMap.put("Set-Cookie", Collections.singletonList(value));
+        this.cookieHandler.put(uri, cookieMap);
     }
 
     @ReactMethod

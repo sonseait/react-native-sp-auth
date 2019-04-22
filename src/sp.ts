@@ -56,66 +56,73 @@ export interface LoginResponse {
 
 export class SPCookieReader {
   private reader: any;
-  constructor(reader: any) {
+  private siteName: string;
+
+  constructor(reader: any, siteName: string) {
     this.reader = reader;
+    this.siteName = siteName;
   }
 
-  getCookie(siteName: string): Promise<SPCookie> {
-    return this.reader.get(`https://${siteName}.sharepoint.com`);
+  getCookie(): Promise<SPCookie> {
+    return this.reader.get(`https://${this.siteName}.sharepoint.com`);
   }
 
-  removeCookie(siteName: string): Promise<void> {
-    return this.reader.remove(`https://${siteName}.sharepoint.com`);
-  }
-
-  async setCookie(siteName: string, rtFaToken: string, fedAuthToken: string): Promise<void> {
+  async removeCookie(): Promise<void> {
     if (Platform.OS === 'ios') {
-      await this.reader.set(`https://${siteName}.sharepoint.com`, 'rtFa', rtFaToken, {
+      return this.reader.remove(`${this.siteName}.sharepoint.com`);
+    }
+    return this.reader.remove(this.siteName);
+  }
+
+  async setCookie(rtFaToken: string, fedAuthToken: string): Promise<void> {
+    // const currentCookie = await this.getCookie();
+    // console.log(`current cookie: ${JSON.stringify(currentCookie)}`);
+
+    if (Platform.OS === 'ios') {
+      await this.reader.set(`https://${this.siteName}.sharepoint.com`, 'rtFa', rtFaToken, {
         domain: 'sharepoint.com',
         path: '/',
       });
-      await this.reader.set(`https://${siteName}.sharepoint.com`, 'FedAuth', fedAuthToken, {
-        domain: `${siteName}.sharepoint.com`,
+      await this.reader.set(`https://${this.siteName}.sharepoint.com`, 'FedAuth', fedAuthToken, {
+        domain: `${this.siteName}.sharepoint.com`,
         path: '/',
       });
     } else {
       await this.reader.set(
-        `https://${siteName}.sharepoint.com`,
+        `https://${this.siteName}.sharepoint.com`,
         `rtFa=${rtFaToken}; Domain=sharepoint.com; Path=/; Secure; HttpOnly`
       );
       await this.reader.set(
-        `https://${siteName}.sharepoint.com`,
-        `FedAuth=${fedAuthToken}; Path=/; Secure; HttpOnly; Domain=${siteName}.sharepoint.com`
+        `https://${this.siteName}.sharepoint.com`,
+        `FedAuth=${fedAuthToken}; Domain=${this.siteName}.sharepoint.com; Path=/; Secure; HttpOnly`
       );
     }
+
+    // const cookieAfterSetted = await this.getCookie();
+    // console.log(`cookie after setted: ${JSON.stringify(cookieAfterSetted)}`);
   }
 }
 
 export class SharePointAuth {
-  private domain: string;
+  private siteName: string;
   private cookieReader: SPCookieReader;
-  private host: string;
 
-  constructor(cookieReader: SPCookieReader, host: string) {
-    this.domain = host
-      .trim()
-      .split('/')[2]
-      .replace('.sharepoint.com', '');
+  constructor(cookieReader: SPCookieReader, siteName: string) {
+    this.siteName = siteName;
     this.cookieReader = cookieReader;
-    this.host = host;
   }
 
-  async getCurrentCookie(): Promise<SPCookie> {
-    const cookies = await this.cookieReader.getCookie(this.domain);
+  async getCurrentToken(): Promise<SPCookie> {
+    const cookies = await this.cookieReader.getCookie();
     if (cookies.FedAuth && cookies.rtFa) {
       return cookies;
     }
-    return Promise.reject(`SharePoint Cookie isn't valid`);
+    return Promise.reject(`Token isn't valid`);
   }
 
-  setCurrentCookie(cookie: Partial<SPCookie>): Promise<void> {
+  setCurrentToken(cookie: Partial<SPCookie>): Promise<void> {
     if (cookie.FedAuth && cookie.rtFa) {
-      return this.cookieReader.setCookie(this.domain, cookie.rtFa, cookie.FedAuth);
+      return this.cookieReader.setCookie(cookie.rtFa, cookie.FedAuth);
     }
     return Promise.reject(`Your cookie you just set isn't match with SharePoint format`);
   }
@@ -126,7 +133,7 @@ export class SharePointAuth {
       samlTpl
         .replace('{username}', username)
         .replace('{password}', password)
-        .replace('{url}', this.host)
+        .replace('{url}', `https://${this.siteName}.sharepoint.com`)
     );
     const body = (await parseXml(loginResponse.data)) as Record<string, any>;
     const responseBody = body['S:Envelope']['S:Body'][0];
@@ -143,16 +150,16 @@ export class SharePointAuth {
   }
 
   private async getCookie(token: string): Promise<void> {
-    await axios.post(`https://${this.domain}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
+    await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
       withCredentials: true,
     });
     // check if cookie was assigned successful?
-    await this.getCurrentCookie();
+    await this.getCurrentToken();
   }
 
   async getDigest(siteCollectionRelativePath?: string): Promise<string> {
     const res = await axios.post(
-      `https://${this.domain}.sharepoint.com${siteCollectionRelativePath || ''}/_api/contextinfo`,
+      `https://${this.siteName}.sharepoint.com${siteCollectionRelativePath || ''}/_api/contextinfo`,
       {},
       {
         headers: {
@@ -176,16 +183,19 @@ export class SharePointAuth {
     await this.logout();
     const token = await this.getToken(username, password);
     await this.getCookie(token);
-    const cookie = await this.getCurrentCookie();
+    const cookie = await this.getCurrentToken();
     const digest = await this.getDigest();
     return {
       digest,
-      cookie: btoa(`FedAuth=${cookie.FedAuth};rtFa=${cookie.rtFa}`),
+      cookie: btoa(JSON.stringify(cookie)),
     };
   }
 
-  logout(): Promise<void> {
-    return this.cookieReader.removeCookie(this.domain);
-    // return this.cookieReader.clearCookies();
+  async logout(): Promise<void> {
+    // const currentCookie = await this.cookieReader.getCookie();
+    // console.log(`current cookie: ${JSON.stringify(currentCookie)}`);
+    await this.cookieReader.removeCookie();
+    // const cookieAfterRemoved = await this.cookieReader.getCookie();
+    // console.log(`cookie after removed: ${JSON.stringify(cookieAfterRemoved)}`);
   }
 }

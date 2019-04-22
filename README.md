@@ -44,17 +44,17 @@ try {
   // trying to restore session
   const digest = await sp.renewDigest();
 } catch (e) {
-  // can't automatic restore the session, read cookie from Storage
-  const cookie = await Storage.getItem('cookie');
-  if (cookie) {
-    await sp.setCurrentCookie(cookie);
+  // can't automatic restore the session, read token from Storage
+  const token = await Storage.getItem('token');
+  if (token) {
+    await sp.setToken(cootokenkie);
     try {
       const digest = await sp.renewDigest();
     } catch (e1) {
       // can't restore the session, re-login
-      const { digest, cookie } = await sp.login('yourusername@yourdomain', 'yourpassword');
-      // store cookie back to Storage
-      await Storage.setItem('cookie', cookie);
+      const { digest, token } = await sp.login('yourusername@yourdomain', 'yourpassword');
+      // store token back to Storage
+      await Storage.setItem('token', token);
     }
   }
 }

@@ -23,7 +23,11 @@ class RNSharePointAuth {
   private spAuth: SharePointAuth;
 
   constructor(host: string) {
-    this.spAuth = new SharePointAuth(new SPCookieReader(RNSpAuth), host);
+    const siteName = host
+      .trim()
+      .split('/')[2]
+      .replace('.sharepoint.com', '');
+    this.spAuth = new SharePointAuth(new SPCookieReader(RNSpAuth, siteName), siteName);
   }
 
   /**
@@ -37,39 +41,25 @@ class RNSharePointAuth {
     return this.spAuth.logout();
   }
 
-  async getCurrentCookie(): Promise<string> {
-    const cookie = await this.spAuth.getCurrentCookie();
-    return btoa(`FedAuth=${cookie.FedAuth};rtFa=${cookie.rtFa}`);
+  async getToken(): Promise<string> {
+    try {
+      const token = await this.spAuth.getCurrentToken();
+      return btoa(JSON.stringify(token));
+    } catch (e) {
+      throw new Error(`You're not login`);
+    }
   }
 
-  async setCurrentCookie(cookie: string): Promise<void> {
-    if (!cookie) {
-      return this.spAuth.logout();
+  async setToken(token: string): Promise<void> {
+    if (!token) {
+      await this.spAuth.logout();
+      throw new Error(`Token isn't valid`);
     }
     try {
-      const realCookie = atob(cookie);
-      if (realCookie.includes('FedAuth=') && realCookie.includes('rtFa=')) {
-        const parts = realCookie.split(';');
-        const newCookie = parts.reduce((acc: Partial<SPCookie>, part: string) => {
-          part = part.trim();
-          if (part.startsWith('FedAuth=')) {
-            const fed = part.replace('FedAuth=', '');
-            if (fed) {
-              acc.FedAuth = fed;
-            }
-          }
-          if (part.startsWith('rtFa=')) {
-            const rtfa = part.replace('rtFa=', '');
-            if (rtfa) {
-              acc.rtFa = rtfa;
-            }
-          }
-          return acc;
-        }, {});
-        return this.spAuth.setCurrentCookie(newCookie);
-      }
+      return this.spAuth.setCurrentToken(JSON.parse(atob(token)));
     } catch (e) {
-      return this.spAuth.logout();
+      await this.spAuth.logout();
+      throw new Error(`Token isn't valid`);
     }
   }
 
