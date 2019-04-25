@@ -63,13 +63,24 @@ export class SPCookieReader {
     this.siteName = siteName;
   }
 
-  getCookie(): Promise<SPCookie> {
-    return this.reader.get(`https://${this.siteName}.sharepoint.com`);
+  async getCookie(): Promise<SPCookie> {
+    const cookie = await this.reader.get(`https://${this.siteName}.sharepoint.com`);
+    if (Platform.OS === 'ios' && cookie && cookie.FedAuth && cookie.rtFa) {
+      return {
+        FedAuth: cookie.FedAuth.value,
+        rtFa: cookie.rtFa.value,
+      };
+    }
+    return {
+      FedAuth: cookie.FedAuth,
+      rtFa: cookie.rtFa,
+    };
   }
 
   async removeCookie(): Promise<void> {
     if (Platform.OS === 'ios') {
-      return this.reader.remove(`${this.siteName}.sharepoint.com`);
+      await this.reader.remove(`${this.siteName}.sharepoint.com`);
+      return this.reader.remove(`.sharepoint.com`);
     }
     return this.reader.remove(this.siteName);
   }
@@ -150,9 +161,7 @@ export class SharePointAuth {
   }
 
   private async getCookie(token: string): Promise<void> {
-    await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
-      withCredentials: true,
-    });
+    await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token);
     // check if cookie was assigned successful?
     await this.getCurrentToken();
   }

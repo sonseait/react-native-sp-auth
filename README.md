@@ -47,7 +47,7 @@ try {
   // can't automatic restore the session, read token from Storage
   const token = await Storage.getItem('token');
   if (token) {
-    await sp.setToken(cootokenkie);
+    await sp.setToken(token);
     try {
       const digest = await sp.renewDigest();
     } catch (e1) {
