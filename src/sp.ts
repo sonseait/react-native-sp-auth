@@ -202,10 +202,10 @@ export class SharePointAuth {
   }
 
   async logout(): Promise<void> {
-    const currentCookie = await this.cookieReader.getCookie();
-    console.log(`current cookie: ${JSON.stringify(currentCookie)}`);
+    // const currentCookie = await this.cookieReader.getCookie();
+    // console.log(`current cookie: ${JSON.stringify(currentCookie)}`);
     await this.cookieReader.removeCookie();
-    const cookieAfterRemoved = await this.cookieReader.getCookie();
-    console.log(`cookie after removed: ${JSON.stringify(cookieAfterRemoved)}`);
+    // const cookieAfterRemoved = await this.cookieReader.getCookie();
+    // console.log(`cookie after removed: ${JSON.stringify(cookieAfterRemoved)}`);
   }
 }

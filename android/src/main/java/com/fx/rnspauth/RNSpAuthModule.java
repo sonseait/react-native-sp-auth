@@ -23,10 +23,6 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
 
     private final ForwardingCookieHandler cookieHandler;
 
-    private static final String EXPIRES_FIELD = "=; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    private static final String DOMAIN_FIELD = "; Domain=";
-    private static final String PATH_FIELD = "; Path=";
-
     public RNSpAuthModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.cookieHandler = new ForwardingCookieHandler(reactContext);
@@ -73,49 +69,12 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
             setCookie(url, "FedAuth=; Domain=.sharepoint.com; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
             setCookie(url, "FedAuth=; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
 
+            setCookie(url, java.text.MessageFormat.format("rtFa=; Domain={0}.sharepoint.com; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT", siteName));
+            setCookie(url, java.text.MessageFormat.format("rtFa=; Domain=.{0}.sharepoint.com; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT", siteName));
             setCookie(url, "rtFa=; Domain=sharepoint.com; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+            setCookie(url, "rtFa=; Domain=.sharepoint.com; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+            setCookie(url, "rtFa=; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
 
-            // URI uri = new URI(url);
-            // List<String> cookieList = cookieHandler.get(uri, new HashMap<String, List<String>>()).get("Cookie");
-            // String domainURI = uri.getScheme() + "://" + uri.getHost() + (uri.getPort() == -1 ? "" : ":" + uri.getPort());
-
-            // if (cookieList != null) {
-            //     String[] cookies = cookieList.get(0).split(";");
-
-            //     // Expires each cookie with every possible domain and path option
-            //     for (String cookie : cookies) {
-            //         String[] parts = cookie.split("=");
-            //         String path = "";
-            //         String[] subPaths = uri.getPath().split("/");
-            //         String name = parts[0].trim();
-            //         String base = name + EXPIRES_FIELD;
-
-            //         setCookie(domainURI, base);
-
-            //         if (subPaths.length == 0) {
-            //             subPaths = new String[]{""};
-            //         }
-
-            //         for (String subPath : subPaths) {
-            //             path += "/" + subPath;
-
-            //             String[] domains = uri.getHost().split("\\.");
-            //             String domain = domains[domains.length - 1];
-
-            //             for (int i = domains.length - 1; i > 0; i--) {
-            //                 domain = domains[i - 1] + "." + domain;
-            //                 setCookie(domainURI, base + DOMAIN_FIELD + "." + domain + PATH_FIELD + path);
-            //                 setCookie(domainURI, base + DOMAIN_FIELD + "." + domain + PATH_FIELD + path);
-            //             }
-
-            //             setCookie(domainURI, base + DOMAIN_FIELD + domain + PATH_FIELD + path);
-
-            //             if (path.equals("/")) {
-            //                 path = "";
-            //             }
-            //         }
-            //     }
-            // }
             promise.resolve(null);
         } catch (Exception e) {
             promise.reject(e);
@@ -124,7 +83,6 @@ public class RNSpAuthModule extends ReactContextBaseJavaModule {
 
     private void setCookie(String url, String value) throws URISyntaxException, IOException {
         URI uri = new URI(url);
-        System.out.println("COOKIE VALUE: " + value);
         Map<String, List<String>> cookieMap = new HashMap<>();
         cookieMap.put("Set-Cookie", Collections.singletonList(value));
         this.cookieHandler.put(uri, cookieMap);
