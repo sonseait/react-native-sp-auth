@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 const parseString = require('react-native-xml2js').parseString;
+import { encode } from 'base-64';
 
 const parseXml = (xml: string) => {
   return new Promise((resolve, reject) => {
@@ -196,15 +197,15 @@ export class SharePointAuth {
     const digest = await this.getDigest();
     return {
       digest,
-      cookie: btoa(JSON.stringify(cookie)),
+      cookie: encode(JSON.stringify(cookie)),
     };
   }
 
   async logout(): Promise<void> {
-    // const currentCookie = await this.cookieReader.getCookie();
-    // console.log(`current cookie: ${JSON.stringify(currentCookie)}`);
+    const currentCookie = await this.cookieReader.getCookie();
+    console.log(`current cookie: ${JSON.stringify(currentCookie)}`);
     await this.cookieReader.removeCookie();
-    // const cookieAfterRemoved = await this.cookieReader.getCookie();
-    // console.log(`cookie after removed: ${JSON.stringify(cookieAfterRemoved)}`);
+    const cookieAfterRemoved = await this.cookieReader.getCookie();
+    console.log(`cookie after removed: ${JSON.stringify(cookieAfterRemoved)}`);
   }
 }

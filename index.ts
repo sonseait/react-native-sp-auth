@@ -1,6 +1,7 @@
 import { NativeModules, Platform } from 'react-native';
 import invariant from 'invariant';
 import { SharePointAuth, LoginResponse, SPCookie, SPCookieReader } from './src/sp';
+import { encode, decode } from 'base-64';
 
 const { RNSpAuthIOS, RNSpAuthAndroid } = NativeModules;
 
@@ -44,7 +45,7 @@ class RNSharePointAuth {
   async getToken(): Promise<string> {
     try {
       const token = await this.spAuth.getCurrentToken();
-      return btoa(JSON.stringify(token));
+      return encode(JSON.stringify(token));
     } catch (e) {
       throw new Error(`You're not login`);
     }
@@ -56,7 +57,7 @@ class RNSharePointAuth {
       throw new Error(`Token isn't valid`);
     }
     try {
-      return this.spAuth.setCurrentToken(JSON.parse(atob(token)));
+      return this.spAuth.setCurrentToken(JSON.parse(decode(token)));
     } catch (e) {
       await this.spAuth.logout();
       throw new Error(`Token isn't valid`);
