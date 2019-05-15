@@ -1,5 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
-import * as invariant from 'invariant';
+const invariant = require('invariant');
 import { SharePointAuth, LoginResponse, SPCookie, SPCookieReader } from './src/sp';
 import { encode, decode } from 'base-64';
 

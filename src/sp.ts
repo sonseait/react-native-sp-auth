@@ -92,7 +92,7 @@ export class SPCookieReader {
 
     if (Platform.OS === 'ios') {
       await this.reader.set(`https://${this.siteName}.sharepoint.com`, 'rtFa', rtFaToken, {
-        domain: 'sharepoint.com',
+        domain: '.sharepoint.com',
         path: '/',
       });
       await this.reader.set(`https://${this.siteName}.sharepoint.com`, 'FedAuth', fedAuthToken, {
@@ -102,7 +102,7 @@ export class SPCookieReader {
     } else {
       await this.reader.set(
         `https://${this.siteName}.sharepoint.com`,
-        `rtFa=${rtFaToken}; Domain=sharepoint.com; Path=/; Secure; HttpOnly`
+        `rtFa=${rtFaToken}; Domain=.sharepoint.com; Path=/; Secure; HttpOnly`
       );
       await this.reader.set(
         `https://${this.siteName}.sharepoint.com`,
