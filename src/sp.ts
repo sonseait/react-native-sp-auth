@@ -162,7 +162,11 @@ export class SharePointAuth {
   }
 
   private async getCookie(token: string): Promise<void> {
-    await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token);
+    await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)',
+      },
+    });
     // check if cookie was assigned successful?
     await this.getCurrentToken();
   }
