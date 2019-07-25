@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 const parseString = require('react-native-xml2js').parseString;
-import { encode } from 'base-64';
 
 const parseXml = (xml: string) => {
   return new Promise((resolve, reject) => {
@@ -51,7 +50,7 @@ export interface SPCookie {
 }
 
 export interface LoginResponse {
-  cookie: string;
+  token: string;
   digest: string;
 }
 
@@ -124,21 +123,6 @@ export class SharePointAuth {
     this.cookieReader = cookieReader;
   }
 
-  async getCurrentToken(): Promise<SPCookie> {
-    const cookies = await this.cookieReader.getCookie();
-    if (cookies.FedAuth && cookies.rtFa) {
-      return cookies;
-    }
-    return Promise.reject(`Token isn't valid`);
-  }
-
-  setCurrentToken(cookie: Partial<SPCookie>): Promise<void> {
-    if (cookie.FedAuth && cookie.rtFa) {
-      return this.cookieReader.setCookie(cookie.rtFa, cookie.FedAuth);
-    }
-    return Promise.reject(`Your cookie you just set isn't match with SharePoint format`);
-  }
-
   private async getToken(username: string, password: string): Promise<string> {
     const loginResponse = await axios.post<string>(
       'https://login.microsoftonline.com/extSTS.srf',
@@ -168,7 +152,11 @@ export class SharePointAuth {
       },
     });
     // check if cookie was assigned successful?
-    await this.getCurrentToken();
+    const cookies = await this.cookieReader.getCookie();
+    if (cookies.FedAuth && cookies.rtFa) {
+      return;
+    }
+    throw new Error(`Token isn't valid`);
   }
 
   async getDigest(siteCollectionRelativePath?: string): Promise<string> {
@@ -197,11 +185,23 @@ export class SharePointAuth {
     await this.logout();
     const token = await this.getToken(username, password);
     await this.getCookie(token);
-    const cookie = await this.getCurrentToken();
     const digest = await this.getDigest();
     return {
       digest,
-      cookie: encode(JSON.stringify(cookie)),
+      token,
+    };
+  }
+
+  /**
+   * Login to SharePoint Online by provide `token` and take `digest` back
+   */
+  async loginToken(token: string): Promise<LoginResponse> {
+    await this.logout();
+    await this.getCookie(token);
+    const digest = await this.getDigest();
+    return {
+      digest,
+      token,
     };
   }
 
