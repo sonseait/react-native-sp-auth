@@ -22,8 +22,8 @@ class RNSharePointAuth {
   private siteName: string;
 
   constructor(host: string) {
+    if (!host.includes('.sharepoint.com')) throw new Error('Invalid site url');
     this.siteName = host.trim().split('/')[2].replace('.sharepoint.com', '');
-    if (!this.siteName.includes('.sharepoint.com')) throw new Error('Invalid site url');
     this.cookieReader = new SPCookieReader(RNSpAuth, this.siteName);
   }
 

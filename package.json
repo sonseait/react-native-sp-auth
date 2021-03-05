@@ -1,7 +1,7 @@
 {
   "name": "react-native-sp-auth",
   "title": "React Native SharePoint Online Authentication",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "React Native SharePoint Online Authentication",
   "main": "index.ts",
   "repository": {
