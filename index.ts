@@ -33,11 +33,13 @@ class RNSharePointAuth {
     FedAuth: string;
     rtFa: string;
   }> {
-    await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)',
-      },
-    });
+    try {
+      await axios.post(`https://${this.siteName}.sharepoint.com/_forms/default.aspx?wa=wsignin1.0`, token, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)',
+        },
+      });
+    } catch {}
     // check if cookie was assigned successful?
     const cookies = await this.cookieReader.getCookie();
     return {
